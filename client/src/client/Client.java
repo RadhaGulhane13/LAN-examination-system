@@ -23,6 +23,7 @@ import javax.swing.JLabel;
 import javax.swing.JPasswordField;
 import javax.swing.JRadioButton;
 import javax.swing.JTextField;
+import javax.swing.Timer;
 
 /**
  *
@@ -56,59 +57,113 @@ public class Client extends JFrame implements ActionListener {
     }
 
     public void LoginPage() {
-
         fm = new JFrame();
         fm.setVisible(true);
         fm.setLocation(700, 350);
         fm.setLayout(null);
-        fm.setSize(550, 300);
-        fm.setTitle("Login");
+        fm.setSize(550, 350);
+        fm.setTitle("LAN Examination System - Login");
+        fm.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-        luser = new JLabel("User Name : ");
+        // Title
+        JLabel titleLabel = new JLabel("LAN Examination System");
+        titleLabel.setBounds(175, 20, 200, 30);
+        titleLabel.setFont(titleLabel.getFont().deriveFont(16.0f));
+        fm.add(titleLabel);
+        
+        luser = new JLabel("Username:");
         fm.add(luser);
-        luser.setBounds(130, 60, 150, 30);
+        luser.setBounds(130, 80, 100, 30);
 
         txtuser = new JTextField();
         fm.add(txtuser);
-        txtuser.setBounds(270, 60, 150, 30);
+        txtuser.setBounds(240, 80, 180, 30);
+        txtuser.setToolTipText("Enter your username");
 
-        lpass = new JLabel("Password   : ");
+        lpass = new JLabel("Password:");
         fm.add(lpass);
-        lpass.setBounds(130, 100, 150, 30);
+        lpass.setBounds(130, 120, 100, 30);
 
         pass = new JPasswordField();
         fm.add(pass);
-        pass.setBounds(270, 100, 150, 30);
+        pass.setBounds(240, 120, 180, 30);
+        pass.setToolTipText("Enter your password");
 
         blogin = new JButton("Login");
         fm.add(blogin);
-        blogin.setBounds(200, 200, 150, 30);
+        blogin.setBounds(225, 180, 100, 35);
+        
+        // Instructions
+        JLabel instructionsLabel = new JLabel("<html><center>Enter your credentials to start the examination</center></html>");
+        instructionsLabel.setBounds(100, 230, 350, 40);
+        instructionsLabel.setHorizontalAlignment(JLabel.CENTER);
+        fm.add(instructionsLabel);
 
         blogin.addActionListener(this);
+        
+        // Allow Enter key to submit
+        fm.getRootPane().setDefaultButton(blogin);
     }
 
     public void ErrorPage() {
+        ErrorPage("Authentication Failed - Invalid Username or Password");
+    }
+    
+    public void ErrorPage(String errorMessage) {
         fm = new JFrame();
         fm.setVisible(true);
         fm.setLocation(700, 350);
         fm.setLayout(null);
         fm.setSize(500, 200);
-        fm.setTitle("Result");
+        fm.setTitle("Error");
+        fm.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-        luser = new JLabel("Invalid User");
+        luser = new JLabel("<html><center>" + errorMessage + "</center></html>");
+        luser.setHorizontalAlignment(JLabel.CENTER);
         fm.add(luser);
-        luser.setBounds(200, 50, 150, 30);
-
+        luser.setBounds(50, 50, 400, 50);
+        
+        JButton okButton = new JButton("OK");
+        okButton.setBounds(200, 120, 100, 30);
+        okButton.addActionListener(e -> {
+            fm.dispose();
+            LoginPage(); // Return to login page
+        });
+        fm.add(okButton);
+    }
+    
+    private void showErrorMessage(String message) {
+        JLabel errorLabel = new JLabel("<html><font color='red'>" + message + "</font></html>");
+        errorLabel.setBounds(130, 150, 300, 30);
+        fm.add(errorLabel);
+        fm.repaint();
+        
+        // Remove error message after 3 seconds
+        new Timer(3000, e -> {
+            fm.remove(errorLabel);
+            fm.repaint();
+        }).start();
     }
 
     @Override
     @SuppressWarnings("empty-statement")
     public void actionPerformed(ActionEvent e) {
+        // Input validation
         username = txtuser.getText();
         password = new String(pass.getPassword());
 
-        try {
+        // Validate inputs
+        if (username == null || username.trim().isEmpty()) {
+            showErrorMessage("Please enter a username");
+            return;
+        }
+        
+        if (password == null || password.trim().isEmpty()) {
+            showErrorMessage("Please enter a password");
+            return;
+        }
 
+        try {
             int port = 5555;
             /*
             An IP address is a unique address that identifies a device on the 
@@ -118,13 +173,13 @@ public class Client extends JFrame implements ActionListener {
             https://www.youtube.com/watch?v=4r4qm_Zxnik
             */
             s = new Socket(InetAddress.getLocalHost(), port);
-            //System.out.println("localhost add..."+InetAddress.getLocalHost());
-            System.out.println("Client is requesting...");
+            System.out.println("Connected to server successfully");
+            
             in = new DataInputStream(s.getInputStream());
             out = new DataOutputStream(s.getOutputStream());
             
             /* Send username and password to the server */
-            out.writeUTF(username);
+            out.writeUTF(username.trim());
             out.flush();
             out.writeUTF(password);
             out.flush();
@@ -151,20 +206,61 @@ public class Client extends JFrame implements ActionListener {
     Once the student done with answering all quetions, this function call gets
     called which will display marks scored by the student.
     */
+    /*
+    Once the student done with answering all questions, this function call gets
+    called which will display marks scored by the student.
+    */
     void displayMarks() {
         fm = new JFrame();
         fm.setVisible(true);
         fm.setLocation(700, 350);
         fm.setLayout(null);
-        fm.setSize(500, 200);
-        fm.setTitle("Result");
+        fm.setSize(500, 250);
+        fm.setTitle("Examination Results");
+        fm.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-        luser = new JLabel("Username : " + username);
-        JLabel lmarks = new JLabel("Marks : " + marks + " out of 10 ");
+        // Title
+        JLabel titleLabel = new JLabel("Examination Completed!");
+        titleLabel.setBounds(150, 20, 200, 30);
+        titleLabel.setFont(titleLabel.getFont().deriveFont(16.0f));
+        fm.add(titleLabel);
+        
+        // Username
+        luser = new JLabel("Student: " + username);
+        luser.setBounds(150, 60, 200, 30);
         fm.add(luser);
+        
+        // Marks with better formatting
+        int totalMarks = 10;
+        int studentMarks = Integer.parseInt(marks);
+        double percentage = (studentMarks * 100.0) / totalMarks;
+        
+        JLabel lmarks = new JLabel("Score: " + marks + " out of " + totalMarks + 
+                                 " (" + String.format("%.1f", percentage) + "%)");
+        lmarks.setBounds(150, 90, 200, 30);
         fm.add(lmarks);
-        luser.setBounds(200, 50, 150, 30);
-        lmarks.setBounds(200, 70, 150, 30);
+        
+        // Performance message
+        String performanceMessage;
+        if (percentage >= 80) {
+            performanceMessage = "Excellent Performance!";
+        } else if (percentage >= 60) {
+            performanceMessage = "Good Performance!";
+        } else if (percentage >= 40) {
+            performanceMessage = "Fair Performance";
+        } else {
+            performanceMessage = "Needs Improvement";
+        }
+        
+        JLabel performanceLabel = new JLabel(performanceMessage);
+        performanceLabel.setBounds(150, 120, 200, 30);
+        fm.add(performanceLabel);
+        
+        // Close button
+        JButton closeButton = new JButton("Close");
+        closeButton.setBounds(200, 160, 100, 30);
+        closeButton.addActionListener(e -> System.exit(0));
+        fm.add(closeButton);
     }
     
     /*
